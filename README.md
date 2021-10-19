@@ -12,4 +12,4 @@ We recommend you to read this document carefully.
 If we update this document during the challenge, we will inform you about this separately.
 
 
-We with you a lot of fun and success with the challenge 🚀
+We wish you a lot of fun and success with the challenge 🚀
