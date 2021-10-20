@@ -3,6 +3,9 @@ import time
 from pydicom import Dataset
 from scp import ModalityStoreSCP
 
+# docker exec -it <container_id> /bin/bash
+# /etc/orthanc/orthanc.json
+# sudo docker run -p 4242:4242 -p 8042:8042 -p 6667 --add-host=host.docker.internal:host-gateway floyai_1
 
 class SeriesCollector:
     """A Series Collector is used to build up a list of instances (a DICOM series) as they are received by the modality.
@@ -63,8 +66,9 @@ class SeriesDispatcher:
             # Information about Python asyncio: https://docs.python.org/3/library/asyncio.html
             # When datasets are received you should collect and process them
             # (e.g. using `asyncio.create_task(self.run_series_collector()`)
-            
-            print("Waiting for Modality")
+            if self.modality_scp.Series.items():
+                print(self.modality_scp.Series)
+
             await asyncio.sleep(0.2)
 
     async def run_series_collectors(self) -> None:
