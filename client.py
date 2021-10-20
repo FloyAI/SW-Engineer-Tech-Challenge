@@ -1,5 +1,7 @@
 import time
+import json
 import asyncio
+import requests
 from copy import deepcopy
 
 from pydicom import Dataset
@@ -90,13 +92,17 @@ class SeriesDispatcher:
     async def dispatch_series_collector(self, series_id) -> None:
         series_instance = self.modality_scp.Series[series_id][0]
         series_ = {
-                "SeriesInstanceUID": series_instance.SeriesInstanceUID,
-                "PatientName": series_instance.PatientName,
-                "PatientID": series_instance.PatientID,
-                "StudyInstanceUID": series_instance.StudyInstanceUID,
+                "SeriesInstanceUID": str(series_instance.SeriesInstanceUID),
+                "PatientName": str(series_instance.PatientName),
+                "PatientID": str(series_instance.PatientID),
+                "StudyInstanceUID": str(series_instance.StudyInstanceUID),
                 "InstancesInSeries": len(self.modality_scp.Series[series_id])
             }
-        print(series_)
+        response = requests.post(
+                url="http://localhost:8000/series/",
+                data=json.dumps(series_)
+            )
+        print(response.status_code, response.json())
 
 
 if __name__ == "__main__":
