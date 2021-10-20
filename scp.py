@@ -18,7 +18,7 @@ class ModalityStoreSCP():
         handlers = [(evt.EVT_C_STORE, self.handle_store)]
 
         self.ae.add_supported_context(MRImageStorage)
-        self.scp = self.ae.start_server(('127.0.0.1', 6667), block=False, evt_handlers=handlers)
+        self.scp = self.ae.start_server(('0.0.0.0', 6667), block=False, evt_handlers=handlers)
         print("SCP Server started")
 
     def handle_store(self, event: events.Event) -> int:
@@ -32,23 +32,9 @@ class ModalityStoreSCP():
         """
         dataset = event.dataset
         dataset.file_meta = FileMetaDataset(event.file_meta)
-
         if dataset.SeriesInstanceUID not in self.Series.keys():
-            self.Series[dataset.SeriesInstanceUID] = {
-                "SeriesInstanceUID": dataset.SeriesInstanceUID,
-                "PatientName": dataset.PatientName,
-                "PatientID": dataset.PatientID,
-                "StudyInstanceUID": dataset.StudyInstanceUID,
-                "InstancesInSeries": int(dataset.InstanceNumber) if\
-                    dataset.InstanceNumber else 0
-            }
-
-        if int(dataset.InstanceNumber) >\
-         self.Series[dataset.SeriesInstanceUID]["InstancesInSeries"]:
-            self.Series[
-                dataset.SeriesInstanceUID
-            ]["InstancesInSeries"] = int(dataset.InstanceNumber)
-
-        # TODO: Do something with the dataset. Think about how you can transfer the dataset from this place 
+            self.Series[dataset.SeriesInstanceUID] = [dataset]
+        else:
+            self.Series[dataset.SeriesInstanceUID].append(dataset)
 
         return 0x0000

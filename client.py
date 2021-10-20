@@ -1,5 +1,7 @@
-import asyncio
 import time
+import asyncio
+from copy import deepcopy
+
 from pydicom import Dataset
 from scp import ModalityStoreSCP
 
@@ -61,32 +63,41 @@ class SeriesDispatcher:
         Keeps the event loop alive whether or not datasets are received from the modality and prints a message
         regulary when no datasets are received.
         """
+        self.series_collector = {}
         while True:
-            # TODO: Regulary check if new datasets are received and act if they are.
-            # Information about Python asyncio: https://docs.python.org/3/library/asyncio.html
-            # When datasets are received you should collect and process them
-            # (e.g. using `asyncio.create_task(self.run_series_collector()`)
             if self.modality_scp.Series.items():
-                print(self.modality_scp.Series)
+                for series_id, instances_ in self.modality_scp.Series.items():
+                    try:
+                        if len(self.series_collector[series_id]) < 5:
+                            self.series_collector[series_id].append(len(instances_))
+                        else:
+                            self.series_collector[series_id].pop(0)
+                            self.series_collector[series_id].append(len(instances_))
+                    except KeyError:
+                        self.series_collector[series_id] = [len(instances_)]
+                
+                for series_id, instance_lens in deepcopy(self.series_collector).items():
+                    # latest 5 values should be similar to qualify as all datasets having been collected
+                    if len(instance_lens) == 5 and instance_lens[0] == instance_lens[-1]:
+                        await self.dispatch_series_collector(series_id)
+                        del self.modality_scp.Series[series_id]
+                        del self.series_collector[series_id]
+
+                print("collecting series:", self.series_collector)
 
             await asyncio.sleep(0.2)
 
-    async def run_series_collectors(self) -> None:
-        """Runs the collection of datasets, which results in the Series Collector being filled.
-        """
-        # TODO: Get the data from the SCP and start dispatching
-        pass
+    async def dispatch_series_collector(self, series_id) -> None:
+        series_instance = self.modality_scp.Series[series_id][0]
+        series_ = {
+                "SeriesInstanceUID": series_instance.SeriesInstanceUID,
+                "PatientName": series_instance.PatientName,
+                "PatientID": series_instance.PatientID,
+                "StudyInstanceUID": series_instance.StudyInstanceUID,
+                "InstancesInSeries": len(self.modality_scp.Series[series_id])
+            }
+        print(series_)
 
-    async def dispatch_series_collector(self) -> None:
-        """Tries to dispatch a Series Collector, i.e. to finish it's dataset collection and scheduling of further
-        methods to extract the desired information.
-        """
-        # Check if the series collector hasn't had an update for a long enough timespan and send the series to the
-        # server if it is complete
-        # NOTE: This is the last given function, you should create more for extracting the information and
-        # sending the data to the server
-        maximum_wait_time = 1
-        pass
 
 
 if __name__ == "__main__":
