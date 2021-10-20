@@ -99,7 +99,6 @@ class SeriesDispatcher:
         print(series_)
 
 
-
 if __name__ == "__main__":
     """Create a Series Dispatcher object and run it's infinite `main()` method in a event loop.
     """
