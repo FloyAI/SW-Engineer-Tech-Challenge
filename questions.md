@@ -12,6 +12,7 @@ More years have been spent establishing the security protocols for REST which gi
 
 
 **2.  As the client and server communicate over the internet in the real world, what measures would you take to secure the data transmission and how would you implement them?**
+- The HTTP protocol should be of a secured nature (HTTPS). This would be achieved by having signed SSL certificates on both the clients and server.
 - Token based authentication and a firewall rule for specific IP addresses.
 - FastAPI shows how to enable [authentication](https://fastapi.tiangolo.com/tutorial/security/) in its documentation.
 - Cloud service providers like [GCP](https://cloud.google.com/appengine/docs/standard/python/creating-firewalls) and AWS provide options for creating firewall rules
