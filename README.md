@@ -13,3 +13,12 @@ If we update this document during the challenge, we will inform you about this s
 
 
 We with you a lot of fun and success with the challenge 🚀
+
+# NOTES
+- Packages are needed to run tests and server. Run `pip install -r requirements.txt` to install them
+- `pytest` is used to run the tests
+- `uvicorn api.main:app --reload` to start the server
+- `python client.py` to start the client
+- `sudo docker run -p 4242:4242 -p 8042:8042 -p 6667 --add-host=host.docker.internal:host-gateway floyai_1` to start the PACS
+- Tests are of an end-to-end type but are incomplete. The test for clients specifically does not touch the functions because more time is needed to become conversant with testing asyncio functions.
+- Negative Tests for the server have also not been included for the same reason above.
