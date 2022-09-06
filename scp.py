@@ -1,4 +1,5 @@
-from pydicom.dataset import FileMetaDataset
+from typing import List
+from pydicom.dataset import FileMetaDataset, Dataset
 from pynetdicom import AE, events, evt, debug_logger
 from pynetdicom.sop_class import MRImageStorage
 
@@ -10,6 +11,7 @@ class ModalityStoreSCP():
         self.ae = AE(ae_title=b'STORESCP')
         self.scp = None
         self._configure_ae()
+        self.datasets_to_store: List[Dataset] = []
 
     def _configure_ae(self) -> None:
         """Configure the Application Entity with the presentation context(s) which should be supported and start the SCP server.
@@ -32,6 +34,6 @@ class ModalityStoreSCP():
         dataset = event.dataset
         dataset.file_meta = FileMetaDataset(event.file_meta)
 
-        # TODO: Do something with the dataset. Think about how you can transfer the dataset from this place 
+        self.datasets_to_store.append(dataset)
 
         return 0x0000

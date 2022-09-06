@@ -19,6 +19,7 @@ class SeriesCollector:
         self.series: list[Dataset] = [first_dataset]
         self.last_update_time = time.time()
         self.dispatch_started = False
+        print(f"Created series collector for id {self.series_instance_uid}")
 
     def add_instance(self, dataset: Dataset) -> bool:
         """Add an dataset to the series collected by this Series Collector if it has the correct Series UID.
@@ -32,6 +33,7 @@ class SeriesCollector:
         if self.series_instance_uid == dataset.SeriesInstanceUID:
             self.series.append(dataset)
             self.last_update_time = time.time()
+            print(f"Added to series {self.series_instance_uid} at {self.last_update_time}")
             return True
 
         return False
@@ -41,7 +43,7 @@ class SeriesDispatcher:
     """This code provides a template for receiving data from a modality using DICOM.
     Be sure to understand how it works, then try to collect incoming series (hint: there is no attribute indicating how
     many instances are in a series, so you have to wait for some time to find out if a new instance is transmitted).
-    For simplyfication, you can assume that only one series is transmitted at a time.
+    For simplification, you can assume that only one series is transmitted at a time.
     You can use the given template, but you don't have to!
     """
 
@@ -56,13 +58,19 @@ class SeriesDispatcher:
     async def main(self) -> None:
         """An infinitely running method used as hook for the asyncio event loop.
         Keeps the event loop alive whether or not datasets are received from the modality and prints a message
-        regulary when no datasets are received.
+        regularly when no datasets are received.
         """
         while True:
-            # TODO: Regulary check if new datasets are received and act if they are.
-            # Information about Python asyncio: https://docs.python.org/3/library/asyncio.html
-            # When datasets are received you should collect and process them
-            # (e.g. using `asyncio.create_task(self.run_series_collector()`)
+            # Check for new datasets and collect them into series
+            if self.modality_scp.datasets_to_store:
+                print(f"{len(self.modality_scp.datasets_to_store)} datasets to store!")
+
+                collect_datasets = asyncio.create_task(self.run_series_collectors())
+                await collect_datasets
+
+            # Attempt to dispatch any series which are ready
+            if self.series_collector:
+                await self.dispatch_series_collector()
             
             print("Waiting for Modality")
             await asyncio.sleep(0.2)
@@ -70,8 +78,16 @@ class SeriesDispatcher:
     async def run_series_collectors(self) -> None:
         """Runs the collection of datasets, which results in the Series Collector being filled.
         """
-        # TODO: Get the data from the SCP and start dispatching
-        pass
+        for dataset in list(self.modality_scp.datasets_to_store):
+            if self.series_collector:
+                self.series_collector.add_instance(dataset)
+
+            else:
+                self.series_collector = SeriesCollector(dataset)
+
+            # delete first entry in original `datasets_to_store` each time we process a dataset
+            # should allow appending to end of the list (receiving new events) while processing
+            del self.modality_scp.datasets_to_store[0]
 
     async def dispatch_series_collector(self) -> None:
         """Tries to dispatch a Series Collector, i.e. to finish it's dataset collection and scheduling of further
@@ -82,7 +98,12 @@ class SeriesDispatcher:
         # NOTE: This is the last given function, you should create more for extracting the information and
         # sending the data to the server
         maximum_wait_time = 1
-        pass
+
+        if time.time() - self.series_collector.last_update_time > 1:
+            print("no more updates, safe to dispatch")
+            self.series_collector.dispatch_started = True
+
+            # start dispatching
 
 
 if __name__ == "__main__":
