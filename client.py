@@ -99,7 +99,7 @@ class SeriesDispatcher:
         # sending the data to the server
         maximum_wait_time = 1
 
-        if time.time() - self.series_collector.last_update_time > 1:
+        if time.time() - self.series_collector.last_update_time > maximum_wait_time:
             print("no more updates, safe to dispatch")
             self.series_collector.dispatch_started = True
 
